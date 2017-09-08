@@ -3,10 +3,14 @@ RSpec.describe "sqlight" do
     `clang sqlight.c -o sqlight`
   end
 
+  before(:each) do
+    `rm test.sqlight`
+  end
+
   def run_script(commands)
     raw_output = nil
 
-    IO.popen("./sqlight", "r+") do |pipe|
+    IO.popen("./sqlight test.sqlight", "r+") do |pipe|
       commands.each do |command|
         pipe.puts command
       end
@@ -104,5 +108,17 @@ RSpec.describe "sqlight" do
         "db > bye bye",
       ]
     end
+  end
+
+  it "keeps data after closing connection" do
+    run_script(["insert 1 user1 person1@example.com", ".exit"])
+
+    result = run_script(["select", ".exit"])
+
+    expect(result).to eq([
+      "db > (1, user1, person1@example.com)",
+      "Executed",
+      "db > bye bye",
+    ])
   end
 end
